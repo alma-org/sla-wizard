@@ -11,6 +11,7 @@ var configs = require("./configs");
  * @param {string} email - Customer email used to personalize the SLA.
  * @param {string} outFile - Path where the generated SLA file will be saved.
  * @param {number} numKeys - Number of API keys to generate. Default is 4.
+ * @returns {string[]} List of generated API keys.
  */
 function generateSLAWithKeys(slaTemplatePath, email, outFile, numKeys = 4) {
     try {
@@ -36,7 +37,9 @@ function generateSLAWithKeys(slaTemplatePath, email, outFile, numKeys = 4) {
         const newSLAContent = yaml.dump(slaDoc, { lineWidth: -1 });
         fs.writeFileSync(outFile, newSLAContent, 'utf8');
 
-        configs.logger.debug(`✅ SLA generated for ${email}: ${outFile}`);        
+        configs.logger.debug(`✅ SLA generated for ${email}: ${outFile}`);  
+
+        return apikeys;      
     } catch (err) {
         configs.logger.error(`❌ Error generating SLA for ${email}: ${err.message}`);
         process.exit(1);
@@ -45,16 +48,18 @@ function generateSLAWithKeys(slaTemplatePath, email, outFile, numKeys = 4) {
 
 /**
  * Generates multiple SLA files from a CSV file containing an "email" column.
- * For each email in the CSV, a new SLA file is created with unique API keys.
+ * Also creates a JSON mapping file with the generated API keys for each email.
  * @param {string} slaTemplatePath - Path to the SLA template in YAML format.
  * @param {string} csvPath - Path to the CSV file containing client information. Must include an "email" column.
  * @param {string} outDir - Directory where the generated SLA files will be saved.
  * @param {number} numKeys - Number of API keys to generate per client. Default is 4.
  */
-function generateSLAsFromCSV(slaTemplatePath, csvPath, outDir, numKeys = 4) {
+function generateSLAsFromCSV(slaTemplatePath, csvPath, outDir, numKeys = 4, mappingFilePath = null) {
     if (!fs.existsSync(outDir)) {
         fs.mkdirSync(outDir, { recursive: true });
     }
+
+    const mapping = {}; // { email: [apikeys...] }
 
     fs.createReadStream(csvPath)
         .pipe(csv())
@@ -62,13 +67,20 @@ function generateSLAsFromCSV(slaTemplatePath, csvPath, outDir, numKeys = 4) {
             if (row.email) {
                 const sanitizedEmail = row.email.replace(/[^a-zA-Z0-9]/g, '_');
                 const outFile = path.join(outDir, `sla_${sanitizedEmail}.yaml`);
-                generateSLAWithKeys(slaTemplatePath, row.email, outFile, numKeys);
+                const apikeys = generateSLAWithKeys(slaTemplatePath, row.email, outFile, numKeys);
+
+                mapping[row.email] = {
+                    apikeys,
+                    slaFile: outFile
+                };
             } else {
-                console.warn(`⚠️ Row without "email" column: ${JSON.stringify(row)}`);
+                configs.logger.warn(`⚠️ Row without "email" column: ${JSON.stringify(row)}`);
             }
         })
         .on('end', () => {
-            console.log(`SLAs successfully generated in: ${outDir}`);
+            const mappingFile = mappingFilePath || path.join(outDir, 'apikeys_mapping.json');
+            fs.writeFileSync(mappingFile, JSON.stringify(mapping, null, 2), 'utf8');
+            configs.logger.debug(`SLAs successfully generated in ${outDir}. Mapping at: ${mappingFile}`);
         });
 }
 

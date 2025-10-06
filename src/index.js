@@ -41,13 +41,15 @@ program.command('generate-slas')
     .requiredOption('--slaTemplate <slaTemplate>', 'Path to SLA template in YAML format following OAS4SLAs')
     .requiredOption('--csv <csvPath>', 'Path to CSV with client information. Must have an "email" column')
     .requiredOption('-o, --outDir <outDir>', 'Directory where the generated SLAs will be saved')
-    .option('--numKeys <numKeys>', 'Number of apikeys that each client should have. By default its value is 1', 1)
+    .option('--numKeys <numKeys>', 'Number of apikeys that each client should have. Default is 1', 1)
+    .option('--mappingFile <mappingFile>', 'Path where the apikeys mapping JSON will be saved. Defaults to <outDir>/apikeys_mapping.json')
     .action((options) => {
         generateSLAs.generateSLAsFromCSV(
             options.slaTemplate,
             options.csv,
             options.outDir,
-            parseInt(options.numKeys, 10)
+            parseInt(options.numKeys, 10),
+            options.mappingFile
         );
     });
 
