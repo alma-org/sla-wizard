@@ -32,6 +32,7 @@ function generateSLAWithKeys(slaTemplatePath, email, outFile, numKeys = 4) {
 
         // 3. Replace "apikeys" section
         slaDoc.context.apikeys = apikeys;
+        slaDoc.context.id = `sla-${email.replace(/[^a-zA-Z0-9]/g, '_')}`
 
         // 4. Save new SLA to file
         const newSLAContent = yaml.dump(slaDoc, { lineWidth: -1 });
