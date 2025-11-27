@@ -546,8 +546,6 @@ function generateNginxConfig(SLAs, oasDoc, apiServerURL, configTemplatePath, aut
         var subSLARates = subSLA["plan"]["rates"];
         var slaApikeys = subSLA["context"]["apikeys"]
         var slaContextID = subSLA["context"]["id"]
-        var slaBurst = parseInt(subSLA["context"]["x-nignx-burst"] || 0, 10); 
-        if (isNaN(slaBurst) || slaBurst < 1) slaBurst = 0;
         allProxyApikeys = allProxyApikeys.concat(slaApikeys);
         mapApikeysDefinition += `     "~(${slaApikeys.join('|')})" "${slaContextID}_${planName}";\n`;
 
@@ -562,36 +560,19 @@ function generateNginxConfig(SLAs, oasDoc, apiServerURL, configTemplatePath, aut
                 var zone_name = `${slaContextID}_${planName}_${utils.sanitizeEndpoint(endpoint)}_${method.toUpperCase()}`;
                 var zone_size = "10m" // 1m = 1 megabyte = 16k IPs
 
-                var endpointBurst = parseInt(method_specs["requests"][0]["x-nignx-burst"] || slaBurst, 10)
-                if (isNaN(endpointBurst) || endpointBurst < 1) endpointBurst = slaBurst;
-                if(slaBurst !== endpointBurst){
-                    slaBurst = endpointBurst
-                }
+                var endpointBurst = parseInt(max, 10) - 1
                 /////////////// LIMITS
                 var limit = `limit_req_zone $${authLocation}_${authName} ` +
                     `zone=${zone_name}:${zone_size} rate=${max}r/${period};\n    `
                 limitsDefinition += limit;
 
                 /////////////// LOCATIONS
-                if(slaBurst === 0){
-
-                    location = `
-                        location /${zone_name} {
-                            rewrite /${zone_name} $uri_original break;
-                            proxy_pass ${apiServerURL};
-                            limit_req zone=${zone_name} nodelay;
-                        }`
-
-                } else {
-
-                    location = `
-                        location /${zone_name} {
-                            rewrite /${zone_name} $uri_original break;
-                            proxy_pass ${apiServerURL};
-                            limit_req zone=${zone_name} burst=${slaBurst} nodelay;
-                        }`
-
-                }
+                location = `
+                    location /${zone_name} {
+                        rewrite /${zone_name} $uri_original break;
+                        proxy_pass ${apiServerURL};
+                        limit_req zone=${zone_name} burst=${endpointBurst} nodelay;
+                    }`
 
                 locationDefinitions += location;
             }
