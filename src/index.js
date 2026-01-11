@@ -43,13 +43,15 @@ program.command('generate-slas')
     .requiredOption('-o, --outDir <outDir>', 'Directory where the generated SLAs will be saved')
     .option('--numKeys <numKeys>', 'Number of apikeys that each client should have. Default is 1', 1)
     .option('--mappingFile <mappingFile>', 'Path where the apikeys mapping JSON will be saved. Defaults to <outDir>/apikeys_mapping.json')
+    .option('--existingSLAs <existingSLAs>', 'Path to a folder containing existing SLAs to update')
     .action((options) => {
         generateSLAs.generateSLAsFromCSV(
             options.slaTemplate,
             options.csv,
             options.outDir,
             parseInt(options.numKeys, 10),
-            options.mappingFile
+            options.mappingFile,
+            options.existingSLAs
         );
     });
 
