@@ -567,12 +567,22 @@ function generateNginxConfig(SLAs, oasDoc, apiServerURL, configTemplatePath, aut
                 limitsDefinition += limit;
 
                 /////////////// LOCATIONS
+                if(endpointBurst > 0){
                 location = `
                     location /${zone_name} {
                         rewrite /${zone_name} $uri_original break;
                         proxy_pass ${apiServerURL};
                         limit_req zone=${zone_name} burst=${endpointBurst} nodelay;
                     }`
+                } else if(endpointBurst === 0){
+                location = `
+                    location /${zone_name} {
+                        rewrite /${zone_name} $uri_original break;
+                        proxy_pass ${apiServerURL};
+                        limit_req zone=${zone_name} nodelay;
+                    }`
+                }
+
 
                 locationDefinitions += location;
             }
@@ -650,7 +660,7 @@ function getSLAsFromURL(slasURL, proxyType, oasDoc, apiServerURL, customTemplate
                 outFile);
         }).catch(error => {
             configs.logger.error(error + ", quitting");
-            process.exit();
+            process.exit(1);
         });
 }
 
@@ -665,7 +675,7 @@ function checkEndpointIntersection(oasDocPaths, SLAsFiltered){
         for (var endpoint in subSLA["plan"]["rates"]) {
             if (Object.keys(oasDocPaths).includes(endpoint) == false){
                 configs.logger.error("There are paths in the SLAs that are not present in the OAS. Quitting");
-                process.exit();
+                process.exit(1);
             }
         }
     }
@@ -693,7 +703,7 @@ function generateConfigHandle(oasPath, proxyType, slaPath, outFile, customTempla
         var apiServerURL = oasDoc.servers[0].url;
     } catch {
         configs.logger.error("OAS' servers property missing");
-        process.exit();
+        process.exit(1);
     }
 
     // Load all SLA path(s)
@@ -721,7 +731,7 @@ function generateConfigHandle(oasPath, proxyType, slaPath, outFile, customTempla
             }
         } catch (err) {
             configs.logger.error(`Error with SLA(s) ${slaPath}: ${err}. Quitting`);
-            process.exit();
+            process.exit(1);
         }
 
         // Validate SLAs
