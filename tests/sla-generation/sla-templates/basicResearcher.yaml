@@ -1,0 +1,31 @@
+sla4oas: 1.0.0
+context:
+  id: normalResearcher1
+  type: agreement
+  api:
+    $ref: ../hpc-oas.yaml
+  provider: ISAGroup
+  customer: NormalUser S.L
+  apikeys:
+    - normal-sla-apikey1
+  validity:
+    from: '2025-01-01T00:00:00+00:00'
+    to: '2026-01-01T00:00:00+00:00'
+metrics:
+  requests:
+    type: integer
+    format: int64
+    description: Number of requests
+plan:
+  name: normal
+  pricing:
+    cost: 0
+    currency: EUR
+    billing: monthly
+  availability: R/00:00:00Z/23:59:59Z
+  rates:
+    /v1/chat/completions:
+      post:
+        requests:
+          - max: 5
+            period: minute

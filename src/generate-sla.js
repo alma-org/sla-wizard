@@ -23,18 +23,18 @@ function generateSLAWithKeys(slaTemplatePath, email, outFile, numKeys = 4, exist
             const existingContent = fs.readFileSync(existingSLAPath, 'utf8');
             slaDoc = yaml.load(existingContent);
             existingKeys = slaDoc.context && slaDoc.context.apikeys ? slaDoc.context.apikeys : [];
-            configs.logger.debug(`🔍 Found existing SLA for ${email} with ${existingKeys.length} keys.`);
+            configs.logger.debug(`Found existing SLA for ${email} with ${existingKeys.length} keys.`);
         } else {
             const templateContent = fs.readFileSync(slaTemplatePath, 'utf8');
             slaDoc = yaml.load(templateContent);
-            configs.logger.debug(`🆕 Generating new SLA for ${email}.`);
+            configs.logger.debug(`Generating new SLA for ${email}.`);
         }
 
         const apikeys = [...existingKeys];
 
         if (apikeys.length < numKeys) {
             const keysToGenerate = numKeys - apikeys.length;
-            configs.logger.debug(`➕ Generating ${keysToGenerate} new keys for ${email}.`);
+            configs.logger.debug(`Generating ${keysToGenerate} new keys for ${email}.`);
             for (let i = 0; i < keysToGenerate; i++) {
                 const apiKey = crypto
                     .createHash('sha256')
@@ -44,7 +44,7 @@ function generateSLAWithKeys(slaTemplatePath, email, outFile, numKeys = 4, exist
                 apikeys.push(apiKey);
             }
         } else if (apikeys.length > numKeys) {
-            configs.logger.debug(`➖ Removing ${apikeys.length - numKeys} keys for ${email}.`);
+            configs.logger.debug(`Removing ${apikeys.length - numKeys} keys for ${email}.`);
             apikeys.splice(numKeys);
         }
 
@@ -55,11 +55,11 @@ function generateSLAWithKeys(slaTemplatePath, email, outFile, numKeys = 4, exist
         const newSLAContent = yaml.dump(slaDoc, { lineWidth: -1 });
         fs.writeFileSync(outFile, newSLAContent, 'utf8');
 
-        configs.logger.debug(`✅ SLA ${existingSLAPath ? 'updated' : 'generated'} for ${email}: ${outFile}`);  
+        configs.logger.debug(`SLA ${existingSLAPath ? 'updated' : 'generated'} for ${email}: ${outFile}`);  
 
         return apikeys;      
     } catch (err) {
-        configs.logger.error(`❌ Error processing SLA for ${email}: ${err.message}`);
+        configs.logger.error(`Error processing SLA for ${email}: ${err.message}`);
         process.exit(1);
     }
 }
@@ -103,7 +103,7 @@ function generateSLAsFromCSV(slaTemplatePath, csvPath, outDir, numKeys = 4, mapp
                     slaFile: outFile
                 };
             } else {
-                configs.logger.warn(`⚠️ Row without "email" column: ${JSON.stringify(row)}`);
+                configs.logger.warn(`Row without "email" column: ${JSON.stringify(row)}`);
             }
         })
         .on('end', () => {

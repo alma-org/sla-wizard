@@ -8,6 +8,7 @@
     "prepare_test": "bash tests/prepare_test.sh",
     "test": "mocha ./tests/basic.js",
     "test:exhaustive": "mocha ./tests/generate_sla_exhaustive.js",
+    "test:scenarios": "mocha ./tests/test_sla_generation_scenarios.js",
     "test_cleanup": "bash tests/test_cleanup.sh",
     "start": "node index.js"
   },
